@@ -3,6 +3,24 @@
  * Defines structures for AI tools, pricing tiers, and API key management
  */
 
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  createdAt: Date;
+}
+
+export interface APIProvider {
+  id: string;
+  name: string;
+  provider: 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral' | 'custom';
+  apiKey: string;
+  isDefault?: boolean;
+  createdAt: Date;
+}
+
 export interface PricingTier {
   id: string;
   name: string;
@@ -19,13 +37,16 @@ export interface AITool {
   name: string;
   description: string;
   provider: string;
-  apiProvider?: 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral' | 'custom';
   website?: string;
-  documentation?: string;
   advantages?: string[];
   disadvantages?: string[];
   highlights?: string[];
   pricingTiers: PricingTier[];
+  version?: string;
+  supportVietnamese?: boolean;
+  lastUpdatedDate?: Date;
+  notes?: string;
+  categoryId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

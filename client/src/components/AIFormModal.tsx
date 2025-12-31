@@ -55,9 +55,7 @@ export default function AIFormModal({
         name: initialData.name,
         description: initialData.description,
         provider: initialData.provider,
-        apiProvider: initialData.apiProvider,
         website: initialData.website,
-        documentation: initialData.documentation,
         advantages: initialData.advantages,
         disadvantages: initialData.disadvantages,
         highlights: initialData.highlights,
@@ -153,14 +151,12 @@ export default function AIFormModal({
       return;
     }
 
-    const tool: AITool = {
+    const newTool: AITool = {
       id: initialData?.id || nanoid(),
       name: formData.name,
       description: formData.description,
       provider: formData.provider,
-      apiProvider: formData.apiProvider as any,
       website: formData.website,
-      documentation: formData.documentation,
       advantages: formData.advantages,
       disadvantages: formData.disadvantages,
       highlights: formData.highlights,
@@ -169,7 +165,7 @@ export default function AIFormModal({
       updatedAt: new Date(),
     };
 
-    onSave(tool);
+    onSave(newTool);
     toast.success(`AI tool ${initialData ? 'updated' : 'created'} successfully`);
     onClose();
   };

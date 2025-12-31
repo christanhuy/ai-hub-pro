@@ -64,7 +64,33 @@ export function hashAPIKey(apiKey: string): string {
   for (let i = 0; i < apiKey.length; i++) {
     const char = apiKey.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return Math.abs(hash).toString(16);
+}
+
+/**
+ * Encrypt generic data for storage
+ */
+export function encryptData(data: string): string {
+  try {
+    const encrypted = xorEncrypt(data, ENCRYPTION_KEY);
+    return btoa(encrypted);
+  } catch (error) {
+    console.error('Encryption error:', error);
+    return data;
+  }
+}
+
+/**
+ * Decrypt generic data from storage
+ */
+export function decryptData(encryptedData: string): string {
+  try {
+    const decrypted = xorEncrypt(atob(encryptedData), ENCRYPTION_KEY);
+    return decrypted;
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return encryptedData;
+  }
 }

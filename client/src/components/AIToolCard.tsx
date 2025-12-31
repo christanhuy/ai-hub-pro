@@ -88,8 +88,7 @@ export default function AIToolCard({ tool, onEdit, onDelete }: AIToolCardProps) 
           {(tool.advantages ||
             tool.disadvantages ||
             tool.highlights ||
-            tool.website ||
-            tool.documentation) && (
+            tool.website) && (
             <div className="border-t border-border px-6 py-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column */}
@@ -160,33 +159,19 @@ export default function AIToolCard({ tool, onEdit, onDelete }: AIToolCardProps) 
                     </div>
                   )}
 
-                  {(tool.website || tool.documentation) && (
+                  {tool.website && (
                     <div>
                       <h4 className="font-semibold text-foreground mb-2">
                         Resources
                       </h4>
-                      <div className="space-y-1">
-                        {tool.website && (
-                          <a
-                            href={tool.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-accent hover:underline flex items-center gap-1"
-                          >
-                            🌐 Website
-                          </a>
-                        )}
-                        {tool.documentation && (
-                          <a
-                            href={tool.documentation}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-accent hover:underline flex items-center gap-1"
-                          >
-                            📖 Documentation
-                          </a>
-                        )}
-                      </div>
+                      <a
+                        href={tool.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-accent hover:underline flex items-center gap-1"
+                      >
+                        🌐 Website
+                      </a>
                     </div>
                   )}
                 </div>
