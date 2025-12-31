@@ -137,16 +137,16 @@ export default function Home() {
     return [...favorites, ...others];
   }, [aiTools, selectedCategoryId, searchQuery]);
 
-  // Paginate tools for Home category
+  // Paginate tools for all categories
   const displayedTools = useMemo(() => {
-    if (selectedCategoryId === 'home' && !showMore) {
+    if (!showMore) {
       return filteredTools.slice(0, MAX_ITEMS_PER_PAGE);
     }
     return filteredTools;
-  }, [filteredTools, selectedCategoryId, showMore]);
+  }, [filteredTools, showMore]);
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
-  const hasMoreItems = selectedCategoryId === 'home' && filteredTools.length > MAX_ITEMS_PER_PAGE;
+  const hasMoreItems = filteredTools.length > MAX_ITEMS_PER_PAGE;
 
   const renderAICard = (tool: AITool) => (
     <div
