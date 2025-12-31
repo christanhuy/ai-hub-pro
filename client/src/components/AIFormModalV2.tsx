@@ -303,13 +303,13 @@ export default function AIFormModalV2({
                 <select
                   value={formData.categoryId}
                   onChange={(e) => handleInputChange('categoryId', e.target.value)}
-                  className="input-field bg-muted/50 text-foreground"
+                  className="input-field bg-white text-gray-900 border border-gray-300"
                 >
-                  <option value="">Select Category</option>
+                  <option value="" className="bg-white text-gray-900">Select Category</option>
                   {categories
                     .filter((cat) => cat.id !== 'home')
                     .map((cat) => (
-                      <option key={cat.id} value={cat.id} className="bg-card text-foreground">
+                      <option key={cat.id} value={cat.id} className="bg-white text-gray-900">
                         {cat.name}
                       </option>
                     ))}
@@ -470,19 +470,19 @@ export default function AIFormModalV2({
                 <select
                   value={newPriceCurrency}
                   onChange={(e) => setNewPriceCurrency(e.target.value)}
-                  className="input-field"
+                  className="input-field bg-white text-gray-900 border border-gray-300"
                 >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="VND">VND</option>
+                  <option value="USD" className="bg-white text-gray-900">USD</option>
+                  <option value="EUR" className="bg-white text-gray-900">EUR</option>
+                  <option value="VND" className="bg-white text-gray-900">VND</option>
                 </select>
                 <select
                   value={newPriceBilling}
                   onChange={(e) => setNewPriceBilling(e.target.value as 'monthly' | 'yearly')}
-                  className="input-field"
+                  className="input-field bg-white text-gray-900 border border-gray-300"
                 >
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
+                  <option value="monthly" className="bg-white text-gray-900">Monthly</option>
+                  <option value="yearly" className="bg-white text-gray-900">Yearly</option>
                 </select>
               </div>
               <Button onClick={handleAddPrice} className="btn-primary w-full px-3 py-2 rounded text-sm">
