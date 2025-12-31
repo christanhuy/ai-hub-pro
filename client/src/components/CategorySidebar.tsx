@@ -161,30 +161,32 @@ export default function CategorySidebar({
                     </span>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingId(category.id);
-                        setEditingName(category.name);
-                      }}
-                      className="p-1 hover:bg-white/20 rounded transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteCategory(category.id);
-                      }}
-                      className="p-1 hover:bg-red-500/20 rounded transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
+                  {/* Action Buttons - Hide for Home category */}
+                  {category.id !== 'home' && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingId(category.id);
+                          setEditingName(category.name);
+                        }}
+                        className="p-1 hover:bg-white/20 rounded transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCategory(category.id);
+                        }}
+                        className="p-1 hover:bg-red-500/20 rounded transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

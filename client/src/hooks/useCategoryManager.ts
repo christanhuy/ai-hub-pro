@@ -25,6 +25,14 @@ export function useCategoryManager() {
           // Initialize with default categories
           const defaults: Category[] = [
             {
+              id: 'home',
+              name: 'Home',
+              description: 'Favorite AI tools and recent additions',
+              color: '#f59e0b',
+              icon: '🏠',
+              createdAt: new Date(),
+            },
+            {
               id: 'general',
               name: 'General Purpose',
               description: 'General-purpose AI assistants',
@@ -63,6 +71,12 @@ export function useCategoryManager() {
   }, []);
 
   const addCategory = useCallback((name: string, description?: string, color?: string, icon?: string) => {
+    // Prevent adding if it's a reserved category
+    if (name.toLowerCase() === 'home') {
+      console.warn('Cannot create a category named Home - it is reserved');
+      return null;
+    }
+
     const newCategory: Category = {
       id: nanoid(),
       name,
@@ -79,6 +93,12 @@ export function useCategoryManager() {
   }, [categories]);
 
   const updateCategory = useCallback((id: string, updates: Partial<Category>) => {
+    // Prevent editing Home category
+    if (id === 'home') {
+      console.warn('Cannot edit Home category - it is reserved');
+      return;
+    }
+
     const updated = categories.map((cat) =>
       cat.id === id ? { ...cat, ...updates } : cat
     );
@@ -87,6 +107,12 @@ export function useCategoryManager() {
   }, [categories]);
 
   const deleteCategory = useCallback((id: string) => {
+    // Prevent deleting Home category
+    if (id === 'home') {
+      console.warn('Cannot delete Home category - it is reserved');
+      return;
+    }
+
     const updated = categories.filter((cat) => cat.id !== id);
     setCategories(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));

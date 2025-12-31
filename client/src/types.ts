@@ -47,6 +47,7 @@ export interface AITool {
   lastUpdatedDate?: Date;
   notes?: string;
   categoryId?: string;
+  isFavorite?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
