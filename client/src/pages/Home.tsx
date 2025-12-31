@@ -10,6 +10,7 @@ import { AITool, Category } from '@/types';
 import CategorySidebar from '@/components/CategorySidebar';
 import AIFormModalV2 from '@/components/AIFormModalV2';
 import SearchBar from '@/components/SearchBar';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useCategoryManager } from '@/hooks/useCategoryManager';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -25,6 +26,7 @@ export default function Home() {
   const [editingTool, setEditingTool] = useState<AITool | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [showMore, setShowMore] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; toolId?: string; toolName?: string }>({ isOpen: false });
 
   // Load AI tools from localStorage
   useEffect(() => {
@@ -91,10 +93,22 @@ export default function Home() {
   };
 
   const handleDeleteAI = (id: string) => {
-    const updated = aiTools.filter((t) => t.id !== id);
-    setAITools(updated);
-    localStorage.setItem('ai-hub-tools', JSON.stringify(updated));
-    toast.success('AI tool deleted');
+    const tool = aiTools.find((t) => t.id === id);
+    setDeleteConfirm({
+      isOpen: true,
+      toolId: id,
+      toolName: tool?.name || 'AI Tool',
+    });
+  };
+
+  const confirmDeleteAI = () => {
+    if (deleteConfirm.toolId) {
+      const updated = aiTools.filter((t) => t.id !== deleteConfirm.toolId);
+      setAITools(updated);
+      localStorage.setItem('ai-hub-tools', JSON.stringify(updated));
+      toast.success('AI tool deleted');
+      setDeleteConfirm({ isOpen: false });
+    }
   };
 
   const handleToggleFavorite = (id: string) => {
@@ -484,6 +498,18 @@ export default function Home() {
           setIsFormOpen(false);
           setEditingTool(undefined);
         }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete AI Tool"
+        message={`Are you sure you want to delete "${deleteConfirm.toolName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        onConfirm={confirmDeleteAI}
+        onCancel={() => setDeleteConfirm({ isOpen: false })}
       />
     </div>
   );

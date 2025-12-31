@@ -9,6 +9,7 @@ import { Plus, Edit2, Trash2, ChevronDown } from 'lucide-react';
 import { Category } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from './ConfirmDialog';
 import { toast } from 'sonner';
 
 interface CategorySidebarProps {
@@ -32,6 +33,7 @@ export default function CategorySidebar({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; categoryId?: string; categoryName?: string }>({ isOpen: false });
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
@@ -56,9 +58,18 @@ export default function CategorySidebar({
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (confirm('Delete this category? AI tools in this category will not be deleted.')) {
-      onDeleteCategory(id);
-      toast.success('Category deleted');
+    const category = categories.find((c) => c.id === id);
+    setDeleteConfirm({
+      isOpen: true,
+      categoryId: id,
+      categoryName: category?.name || 'Category',
+    });
+  };
+
+  const confirmDeleteCategory = () => {
+    if (deleteConfirm.categoryId) {
+      onDeleteCategory(deleteConfirm.categoryId);
+      setDeleteConfirm({ isOpen: false });
     }
   };
 
@@ -205,6 +216,18 @@ export default function CategorySidebar({
       <div className="p-4 border-t border-border text-xs text-muted-foreground">
         <p>Total: {categories.length} categories</p>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteConfirm.categoryName}"? AI tools in this category will not be deleted.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setDeleteConfirm({ isOpen: false })}
+      />
     </div>
   );
 }

@@ -68,15 +68,11 @@ export default function AIFormModalV2({
   categories,
 }: AIFormModalV2Props) {
   const [formData, setFormData] = useState<FormData>(DEFAULT_FORM_STATE);
-  const [newPrice, setNewPrice] = useState('');
-  const [newPriceName, setNewPriceName] = useState('');
-  const [newPriceCurrency, setNewPriceCurrency] = useState('USD');
-  const [newPriceBilling, setNewPriceBilling] = useState<'monthly' | 'yearly'>('monthly');
-
-  const { isLoading: isFetching, error: fetchError, data: aiInfo, fetchAIInfo, reset: resetFetcher } = useAIInfoFetcher();
   const [suggestionsFor, setSuggestionsFor] = useState<string | null>(null);
+  const [aiInfo, setAIInfo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Initialize form
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -88,7 +84,9 @@ export default function AIFormModalV2({
         disadvantages: initialData.disadvantages || [],
         version: initialData.version || '',
         supportVietnamese: initialData.supportVietnamese || false,
-        lastUpdatedDate: initialData.lastUpdatedDate?.toString().split('T')[0] || '',
+        lastUpdatedDate: initialData.lastUpdatedDate
+          ? new Date(initialData.lastUpdatedDate).toISOString().split('T')[0]
+          : '',
         notes: initialData.notes || '',
         categoryId: initialData.categoryId || '',
         pricingTiers: initialData.pricingTiers || [],
@@ -96,8 +94,7 @@ export default function AIFormModalV2({
     } else {
       setFormData(DEFAULT_FORM_STATE);
     }
-    resetFetcher();
-  }, [isOpen, initialData, resetFetcher]);
+  }, [initialData, isOpen]);
 
   const handleInputChange = (field: keyof FormData, value: any) => {
     setFormData((prev) => ({
@@ -114,11 +111,10 @@ export default function AIFormModalV2({
   };
 
   const handleUpdateAdvantage = (index: number, value: string) => {
-    setFormData((prev) => {
-      const updated = [...prev.advantages];
-      updated[index] = value;
-      return { ...prev, advantages: updated };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      advantages: prev.advantages.map((a, i) => (i === index ? value : a)),
+    }));
   };
 
   const handleRemoveAdvantage = (index: number) => {
@@ -136,11 +132,10 @@ export default function AIFormModalV2({
   };
 
   const handleUpdateDisadvantage = (index: number, value: string) => {
-    setFormData((prev) => {
-      const updated = [...prev.disadvantages];
-      updated[index] = value;
-      return { ...prev, disadvantages: updated };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      disadvantages: prev.disadvantages.map((d, i) => (i === index ? value : d)),
+    }));
   };
 
   const handleRemoveDisadvantage = (index: number) => {
@@ -150,54 +145,47 @@ export default function AIFormModalV2({
     }));
   };
 
-  const handleAddPrice = () => {
-    if (!newPriceName.trim() || !newPrice.trim()) {
-      toast.error('Please fill in price name and amount');
-      return;
-    }
-
+  const handleAddPricingTier = () => {
     setFormData((prev) => ({
       ...prev,
       pricingTiers: [
         ...prev.pricingTiers,
         {
           id: nanoid(),
-          name: newPriceName,
-          price: parseFloat(newPrice),
-          currency: newPriceCurrency,
-          billingCycle: newPriceBilling,
+          name: '',
+          price: 0,
+          currency: 'USD',
+          billingCycle: 'monthly',
           features: [],
         },
       ],
     }));
-
-    setNewPriceName('');
-    setNewPrice('');
-    setNewPriceCurrency('USD');
-    setNewPriceBilling('monthly');
   };
 
-  const handleRemovePrice = (id: string) => {
+  const handleUpdatePricingTier = (id: string, updates: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      pricingTiers: prev.pricingTiers.map((tier) =>
+        tier.id === id ? { ...tier, ...updates } : tier
+      ),
+    }));
+  };
+
+  const handleRemovePricingTier = (id: string) => {
     setFormData((prev) => ({
       ...prev,
       pricingTiers: prev.pricingTiers.filter((p) => p.id !== id),
     }));
   };
 
-  const handleFetchAIInfo = async (field: string) => {
+  const handleSave = () => {
     if (!formData.name.trim()) {
-      toast.error('Please enter AI name first');
+      toast.error('Please enter AI tool name');
       return;
     }
 
-    setSuggestionsFor(field);
-    // TODO: Implement API provider selection
-    toast.info('API Provider selection coming soon');
-  };
-
-  const handleSave = () => {
-    if (!formData.name.trim() || !formData.provider.trim()) {
-      toast.error('Please fill in AI name and provider');
+    if (!formData.categoryId) {
+      toast.error('Please select a category');
       return;
     }
 
@@ -254,7 +242,7 @@ export default function AIFormModalV2({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  AI Name
+                  AI Name <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.name}
@@ -265,7 +253,7 @@ export default function AIFormModalV2({
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Provider
+                  Provider (Optional)
                 </label>
                 <Input
                   value={formData.provider}
@@ -298,27 +286,7 @@ export default function AIFormModalV2({
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">
-                  Category
-                </label>
-                <select
-                  value={formData.categoryId}
-                  onChange={(e) => handleInputChange('categoryId', e.target.value)}
-                  className="input-field"
-                >
-                  <option value="">Select Category</option>
-                  {categories
-                    .filter((cat) => cat.id !== 'home')
-                    .map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Last Updated
+                  Last Updated Date
                 </label>
                 <Input
                   type="date"
@@ -327,53 +295,62 @@ export default function AIFormModalV2({
                 />
               </div>
 
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Category <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={formData.categoryId}
+                  onChange={(e) => handleInputChange('categoryId', e.target.value)}
+                  className="w-full px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option value="">Select Category</option>
+                  {categories
+                    .filter((c) => c.id !== 'home')
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  id="supportViet"
+                  id="supportVietnamese"
                   checked={formData.supportVietnamese}
                   onChange={(e) => handleInputChange('supportVietnamese', e.target.checked)}
-                  className="w-4 h-4 rounded border-border cursor-pointer"
+                  className="w-4 h-4 rounded border-border"
                 />
-                <label htmlFor="supportViet" className="text-sm font-medium text-foreground cursor-pointer">
-                  Support Vietnamese
+                <label htmlFor="supportVietnamese" className="text-sm font-medium text-foreground">
+                  Supports Vietnamese
                 </label>
               </div>
             </div>
           </div>
 
           {/* Description */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Description
-            </label>
-            <div className="relative">
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Describe this AI tool..."
-                className="input-field min-h-24 resize-none"
-              />
-              <button
-                onClick={() => handleFetchAIInfo('description')}
-                disabled={isFetching && suggestionsFor === 'description'}
-                className="absolute top-2 right-2 p-2 hover:bg-muted rounded transition-colors"
-                title="Get AI suggestions"
-              >
-                <Sparkles className="w-4 h-4 text-accent" />
-              </button>
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground block">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Describe the AI tool..."
+              className="w-full px-4 py-2 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none h-24"
+            />
           </div>
 
           {/* Advantages */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Advantages</label>
               <button
                 onClick={handleAddAdvantage}
-                className="text-xs text-accent hover:underline flex items-center gap-1"
+                className="flex items-center gap-1 text-accent hover:text-accent/80 text-sm transition-colors"
               >
-                <Plus className="w-3 h-3" /> Add
+                <Plus className="w-4 h-4" />
+                Add
               </button>
             </div>
             <div className="space-y-2">
@@ -382,21 +359,13 @@ export default function AIFormModalV2({
                   <Input
                     value={adv}
                     onChange={(e) => handleUpdateAdvantage(idx, e.target.value)}
-                    placeholder="Advantage..."
+                    placeholder="e.g., Fast responses"
                   />
                   <button
                     onClick={() => handleRemoveAdvantage(idx)}
-                    className="p-2 hover:bg-destructive/10 rounded transition-colors"
+                    className="p-2 hover:bg-destructive/20 rounded transition-colors"
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
-                  </button>
-                  <button
-                    onClick={() => handleFetchAIInfo('advantages')}
-                    disabled={isFetching && suggestionsFor === 'advantages'}
-                    className="p-2 hover:bg-muted rounded transition-colors"
-                    title="Get AI suggestions"
-                  >
-                    <Sparkles className="w-4 h-4 text-accent" />
                   </button>
                 </div>
               ))}
@@ -404,14 +373,15 @@ export default function AIFormModalV2({
           </div>
 
           {/* Disadvantages */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Disadvantages</label>
               <button
                 onClick={handleAddDisadvantage}
-                className="text-xs text-accent hover:underline flex items-center gap-1"
+                className="flex items-center gap-1 text-accent hover:text-accent/80 text-sm transition-colors"
               >
-                <Plus className="w-3 h-3" /> Add
+                <Plus className="w-4 h-4" />
+                Add
               </button>
             </div>
             <div className="space-y-2">
@@ -420,91 +390,76 @@ export default function AIFormModalV2({
                   <Input
                     value={dis}
                     onChange={(e) => handleUpdateDisadvantage(idx, e.target.value)}
-                    placeholder="Disadvantage..."
+                    placeholder="e.g., Limited context"
                   />
                   <button
                     onClick={() => handleRemoveDisadvantage(idx)}
-                    className="p-2 hover:bg-destructive/10 rounded transition-colors"
+                    className="p-2 hover:bg-destructive/20 rounded transition-colors"
                   >
                     <Trash2 className="w-4 h-4 text-destructive" />
-                  </button>
-                  <button
-                    onClick={() => handleFetchAIInfo('disadvantages')}
-                    disabled={isFetching && suggestionsFor === 'disadvantages'}
-                    className="p-2 hover:bg-muted rounded transition-colors"
-                    title="Get AI suggestions"
-                  >
-                    <Sparkles className="w-4 h-4 text-accent" />
                   </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Pricing */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          {/* Pricing Tiers */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Pricing Tiers</label>
               <button
-                onClick={handleAddPrice}
-                className="text-xs text-accent hover:underline flex items-center gap-1"
+                onClick={handleAddPricingTier}
+                className="flex items-center gap-1 text-accent hover:text-accent/80 text-sm transition-colors"
               >
-                <Plus className="w-3 h-3" /> Add Price
+                <Plus className="w-4 h-4" />
+                Add Tier
               </button>
             </div>
-
-            {/* Add Price Form */}
-            <div className="bg-muted/30 p-3 rounded-lg mb-3 space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <Input
-                  value={newPriceName}
-                  onChange={(e) => setNewPriceName(e.target.value)}
-                  placeholder="Plan name"
-                />
-                <Input
-                  type="number"
-                  value={newPrice}
-                  onChange={(e) => setNewPrice(e.target.value)}
-                  placeholder="Price"
-                />
-                <select
-                  value={newPriceCurrency}
-                  onChange={(e) => setNewPriceCurrency(e.target.value)}
-                  className="input-field"
-                >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="VND">VND</option>
-                </select>
-                <select
-                  value={newPriceBilling}
-                  onChange={(e) => setNewPriceBilling(e.target.value as 'monthly' | 'yearly')}
-                  className="input-field"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
-              </div>
-              <Button onClick={handleAddPrice} className="btn-primary w-full px-3 py-2 rounded text-sm">
-                Add Tier
-              </Button>
-            </div>
-
-            {/* Pricing List */}
-            <div className="space-y-2">
+            <div className="space-y-4">
               {formData.pricingTiers.map((tier) => (
-                <div key={tier.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <div>
-                    <p className="font-medium text-foreground">{tier.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {tier.currency} {tier.price} / {tier.billingCycle}
-                    </p>
+                <div key={tier.id} className="p-4 border border-border rounded-lg space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <Input
+                      value={tier.name}
+                      onChange={(e) => handleUpdatePricingTier(tier.id, { name: e.target.value })}
+                      placeholder="Tier name"
+                    />
+                    <Input
+                      type="number"
+                      value={tier.price}
+                      onChange={(e) =>
+                        handleUpdatePricingTier(tier.id, { price: parseFloat(e.target.value) })
+                      }
+                      placeholder="Price"
+                    />
+                    <select
+                      value={tier.currency}
+                      onChange={(e) => handleUpdatePricingTier(tier.id, { currency: e.target.value })}
+                      className="px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="VND">VND</option>
+                    </select>
+                    <select
+                      value={tier.billingCycle}
+                      onChange={(e) =>
+                        handleUpdatePricingTier(tier.id, {
+                          billingCycle: e.target.value as 'monthly' | 'yearly',
+                        })
+                      }
+                      className="px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
                   </div>
                   <button
-                    onClick={() => handleRemovePrice(tier.id)}
-                    className="p-2 hover:bg-destructive/10 rounded transition-colors"
+                    onClick={() => handleRemovePricingTier(tier.id)}
+                    className="w-full p-2 hover:bg-destructive/20 rounded transition-colors text-destructive text-sm"
                   >
-                    <Trash2 className="w-4 h-4 text-destructive" />
+                    Remove Tier
                   </button>
                 </div>
               ))}
@@ -512,60 +467,25 @@ export default function AIFormModalV2({
           </div>
 
           {/* Notes */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Notes
-            </label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground block">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               placeholder="Additional notes..."
-              className="input-field min-h-20 resize-none"
+              className="w-full px-4 py-2 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none h-20"
             />
           </div>
+        </div>
 
-          {/* AI Fetch Error */}
-          {fetchError && (
-            <ErrorAlert
-              message={fetchError}
-              title="AI Fetch Error"
-              onDismiss={resetFetcher}
-              onRetry={() => handleFetchAIInfo(suggestionsFor || 'description')}
-            />
-          )}
-
-          {/* AI Suggestions */}
-          {isFetching && suggestionsFor && (
-            <LoadingSpinner message={`Fetching ${suggestionsFor}...`} size="sm" />
-          )}
-
-          {aiInfo && suggestionsFor && (
-            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
-              <h4 className="font-semibold text-foreground mb-2">Suggestions for {suggestionsFor}</h4>
-              <div className="space-y-2">
-                {Array.isArray(aiInfo) ? (
-                  aiInfo.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <input type="checkbox" className="mt-1 w-4 h-4 rounded border-border cursor-pointer" />
-                      <p className="text-sm text-foreground">{item}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-foreground">{JSON.stringify(aiInfo)}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-2 pt-4 border-t border-border">
-            <Button onClick={handleSave} className="flex-1 btn-primary px-4 py-2 rounded">
-              Save AI Tool
-            </Button>
-            <Button onClick={onClose} className="flex-1 btn-secondary px-4 py-2 rounded">
-              Cancel
-            </Button>
-          </div>
+        {/* Footer */}
+        <div className="flex gap-3 p-6 border-t border-border justify-end">
+          <Button onClick={onClose} className="btn-secondary px-6 py-2 rounded">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} className="btn-primary px-6 py-2 rounded">
+            {initialData ? 'Update' : 'Add'} AI Tool
+          </Button>
         </div>
       </div>
     </div>
