@@ -303,13 +303,13 @@ export default function AIFormModalV2({
                 <select
                   value={formData.categoryId}
                   onChange={(e) => handleInputChange('categoryId', e.target.value)}
-                  className="input-field"
+                  className="input-field bg-muted/50 text-foreground"
                 >
                   <option value="">Select Category</option>
                   {categories
                     .filter((cat) => cat.id !== 'home')
                     .map((cat) => (
-                      <option key={cat.id} value={cat.id}>
+                      <option key={cat.id} value={cat.id} className="bg-card text-foreground">
                         {cat.name}
                       </option>
                     ))}

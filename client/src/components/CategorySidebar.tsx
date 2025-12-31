@@ -115,7 +115,14 @@ export default function CategorySidebar({
             No categories yet
           </p>
         ) : (
-          categories.map((category) => (
+          categories
+            .sort((a, b) => {
+              // Home category always first
+              if (a.id === 'home') return -1;
+              if (b.id === 'home') return 1;
+              return 0;
+            })
+            .map((category) => (
             <div
               key={category.id}
               className={`group relative rounded-lg transition-all duration-200 ${

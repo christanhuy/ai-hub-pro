@@ -159,7 +159,7 @@ export default function Home() {
           <h3 className="text-lg font-bold text-foreground">{tool.name}</h3>
           <p className="text-sm text-muted-foreground">{tool.provider}</p>
         </div>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-2">
           <button
             onClick={() => handleToggleFavorite(tool.id)}
             className={`p-2 rounded transition-colors ${
@@ -173,14 +173,14 @@ export default function Home() {
           </button>
           <button
             onClick={() => handleEditAI(tool)}
-            className="p-2 hover:bg-accent/20 rounded transition-colors"
+            className="p-2 hover:bg-accent/20 rounded transition-colors opacity-0 group-hover:opacity-100"
             title="Edit"
           >
             ✏️
           </button>
           <button
             onClick={() => handleDeleteAI(tool.id)}
-            className="p-2 hover:bg-destructive/20 rounded transition-colors"
+            className="p-2 hover:bg-destructive/20 rounded transition-colors opacity-0 group-hover:opacity-100"
             title="Delete"
           >
             🗑️
