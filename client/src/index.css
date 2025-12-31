@@ -183,6 +183,22 @@
     @apply outline-none border-accent ring-2 ring-accent/20;
   }
 
+  /* Select Options Styling */
+  select {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: #1e293b;
+    color: #f1f5f9;
+  }
+
+  select option:checked {
+    background: linear-gradient(#06b6d4, #06b6d4);
+    background-color: #06b6d4 !important;
+    color: #0f172a;
+  }
+
   /* Section Title */
   .section-title {
     @apply text-2xl font-bold text-foreground;
