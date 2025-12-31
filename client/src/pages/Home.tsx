@@ -49,8 +49,6 @@ export default function Home() {
     const result = addCategory(name);
     if (result) {
       toast.success('Category added');
-    } else {
-      toast.error('Cannot create a category with that name');
     }
   };
 
@@ -61,36 +59,42 @@ export default function Home() {
 
   const handleDeleteCategory = (id: string) => {
     deleteCategory(id);
-    if (selectedCategoryId === id) {
-      setSelectedCategoryId('home');
-    }
     toast.success('Category deleted');
+    setSelectedCategoryId('home');
   };
 
-  const handleSaveAI = (tool: AITool) => {
-    const updated = editingTool
-      ? aiTools.map((t) => (t.id === tool.id ? tool : t))
-      : [...aiTools, tool];
-
+  const handleAddAI = (tool: AITool) => {
+    const newTool: AITool = {
+      ...tool,
+      id: tool.id || nanoid(),
+      createdAt: tool.createdAt || new Date(),
+    };
+    const updated = [...aiTools, newTool];
     setAITools(updated);
     localStorage.setItem('ai-hub-tools', JSON.stringify(updated));
-    setEditingTool(undefined);
     setIsFormOpen(false);
-    toast.success(editingTool ? 'AI tool updated' : 'AI tool created');
-  };
-
-  const handleDeleteAI = (id: string) => {
-    if (confirm('Delete this AI tool?')) {
-      const updated = aiTools.filter((t) => t.id !== id);
-      setAITools(updated);
-      localStorage.setItem('ai-hub-tools', JSON.stringify(updated));
-      toast.success('AI tool deleted');
-    }
+    toast.success('AI tool added successfully');
   };
 
   const handleEditAI = (tool: AITool) => {
     setEditingTool(tool);
     setIsFormOpen(true);
+  };
+
+  const handleUpdateAI = (updatedTool: AITool) => {
+    const updated = aiTools.map((t) => (t.id === updatedTool.id ? updatedTool : t));
+    setAITools(updated);
+    localStorage.setItem('ai-hub-tools', JSON.stringify(updated));
+    setIsFormOpen(false);
+    setEditingTool(undefined);
+    toast.success('AI tool updated successfully');
+  };
+
+  const handleDeleteAI = (id: string) => {
+    const updated = aiTools.filter((t) => t.id !== id);
+    setAITools(updated);
+    localStorage.setItem('ai-hub-tools', JSON.stringify(updated));
+    toast.success('AI tool deleted');
   };
 
   const handleToggleFavorite = (id: string) => {
@@ -122,13 +126,9 @@ export default function Home() {
       );
     }
 
-    // For Home category, show favorites first, then recent, then all
+    // For Home category, show only favorites
     if (selectedCategoryId === 'home') {
-      const favorites = tools.filter((t) => t.isFavorite);
-      const recent = tools
-        .filter((t) => !t.isFavorite)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      return [...favorites, ...recent];
+      return tools.filter((t) => t.isFavorite);
     }
 
     // For other categories, show favorites first
@@ -137,16 +137,41 @@ export default function Home() {
     return [...favorites, ...others];
   }, [aiTools, selectedCategoryId, searchQuery]);
 
-  // Paginate tools for all categories
+  // Group favorite tools by category for Home page
+  const favoritesByCategory = useMemo(() => {
+    if (selectedCategoryId !== 'home') {
+      // For other categories, paginate normally
+      if (!showMore) {
+        return { [selectedCategoryId]: filteredTools.slice(0, MAX_ITEMS_PER_PAGE) };
+      }
+      return { [selectedCategoryId]: filteredTools };
+    }
+
+    // For Home page, group favorites by category
+    const grouped: Record<string, AITool[]> = {};
+    aiTools.filter((t) => t.isFavorite).forEach((tool) => {
+      const catId = tool.categoryId || 'uncategorized';
+      if (!grouped[catId]) {
+        grouped[catId] = [];
+      }
+      grouped[catId].push(tool);
+    });
+    return grouped;
+  }, [aiTools, selectedCategoryId, showMore]);
+
+  // Paginate tools for non-home categories
   const displayedTools = useMemo(() => {
+    if (selectedCategoryId === 'home') {
+      return filteredTools;
+    }
     if (!showMore) {
       return filteredTools.slice(0, MAX_ITEMS_PER_PAGE);
     }
     return filteredTools;
-  }, [filteredTools, showMore]);
+  }, [filteredTools, selectedCategoryId, showMore]);
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
-  const hasMoreItems = filteredTools.length > MAX_ITEMS_PER_PAGE;
+  const hasMoreItems = selectedCategoryId !== 'home' && filteredTools.length > MAX_ITEMS_PER_PAGE;
 
   const renderAICard = (tool: AITool) => (
     <div
@@ -277,7 +302,7 @@ export default function Home() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-gradient-to-r from-purple-600/10 to-cyan-500/10 border-b border-border px-8 py-6">
           <div className="flex items-center justify-between mb-4">
@@ -324,71 +349,141 @@ export default function Home() {
 
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto p-8">
-          {displayedTools.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <p className="text-xl text-muted-foreground mb-4">
-                  {searchQuery
-                    ? 'No AI tools found matching your search'
-                    : selectedCategoryId === 'home'
-                    ? 'No AI tools yet. Start by creating one!'
-                    : 'No AI tools in this category yet'}
-                </p>
-                <Button
-                  onClick={() => {
-                    setEditingTool(undefined);
-                    setIsFormOpen(true);
-                  }}
-                  className="btn-primary px-6 py-2 rounded"
-                >
-                  Add First AI Tool
-                </Button>
+          {selectedCategoryId === 'home' ? (
+            // Home page: Show favorites grouped by category
+            Object.keys(favoritesByCategory).length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-xl text-muted-foreground mb-4">
+                    No favorite AI tools yet. Start by marking some as favorites!
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setEditingTool(undefined);
+                      setIsFormOpen(true);
+                    }}
+                    className="btn-primary px-6 py-2 rounded"
+                  >
+                    Add First AI Tool
+                  </Button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-12">
+                {Object.entries(favoritesByCategory).map(([categoryId, tools]) => {
+                  const category = categories.find((c) => c.id === categoryId);
+                  const displayLimit = showMore ? tools.length : Math.min(6, tools.length);
+                  const displayedCategoryTools = tools.slice(0, displayLimit);
+                  const hasMoreInCategory = tools.length > 6;
+
+                  return (
+                    <div key={categoryId}>
+                      {/* Category Header */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                            {category?.icon && <span>{category.icon}</span>}
+                            {category?.name || 'Uncategorized'}
+                          </h2>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {category?.description || ''}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => setSelectedCategoryId(categoryId)}
+                          className="btn-primary px-4 py-2 rounded text-sm"
+                        >
+                          Discover All
+                        </Button>
+                      </div>
+
+                      {/* Tools Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {displayedCategoryTools.map((tool) => renderAICard(tool))}
+                      </div>
+
+                      {/* Show More Button for Category */}
+                      {hasMoreInCategory && displayLimit < tools.length && (
+                        <div className="flex justify-center mb-8">
+                          <button
+                            onClick={() => setShowMore(true)}
+                            className="text-accent hover:text-accent/80 text-sm font-medium transition-colors"
+                          >
+                            Show more
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
           ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {displayedTools.map((tool) => renderAICard(tool))}
+            // Category page: Show all tools in category
+            displayedTools.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-xl text-muted-foreground mb-4">
+                    {searchQuery
+                      ? 'No AI tools found matching your search'
+                      : 'No AI tools in this category yet'}
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setEditingTool(undefined);
+                      setIsFormOpen(true);
+                    }}
+                    className="btn-primary px-6 py-2 rounded"
+                  >
+                    Add AI Tool
+                  </Button>
+                </div>
               </div>
-
-              {/* Show More Button */}
-              {hasMoreItems && !showMore && (
-                <div className="flex justify-center">
-                  <Button
-                    onClick={() => setShowMore(true)}
-                    className="btn-secondary px-6 py-2 rounded"
-                  >
-                    Show More ({filteredTools.length - MAX_ITEMS_PER_PAGE} more)
-                  </Button>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {displayedTools.map((tool) => renderAICard(tool))}
                 </div>
-              )}
 
-              {/* Show Less Button */}
-              {hasMoreItems && showMore && (
-                <div className="flex justify-center">
-                  <Button
-                    onClick={() => setShowMore(false)}
-                    className="btn-secondary px-6 py-2 rounded"
-                  >
-                    Show Less
-                  </Button>
-                </div>
-              )}
-            </>
+                {/* Show More Button */}
+                {hasMoreItems && !showMore && (
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => setShowMore(true)}
+                      className="text-accent hover:text-accent/80 text-sm font-medium transition-colors"
+                    >
+                      Show more ({filteredTools.length - MAX_ITEMS_PER_PAGE} more)
+                    </button>
+                  </div>
+                )}
+
+                {/* Show Less Button */}
+                {hasMoreItems && showMore && (
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => setShowMore(false)}
+                      className="text-accent hover:text-accent/80 text-sm font-medium transition-colors"
+                    >
+                      Show less
+                    </button>
+                  </div>
+                )}
+              </>
+            )
           )}
         </main>
       </div>
 
-      {/* Add/Edit AI Tool Modal */}
+      {/* Form Modal */}
       <AIFormModalV2
         isOpen={isFormOpen}
+        categories={categories}
+        initialData={editingTool}
+        onSave={editingTool ? handleUpdateAI : handleAddAI}
         onClose={() => {
           setIsFormOpen(false);
           setEditingTool(undefined);
         }}
-        onSave={handleSaveAI}
-        initialData={editingTool}
-        categories={categories}
       />
     </div>
   );
