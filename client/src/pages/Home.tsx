@@ -5,10 +5,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
+import { Link } from 'wouter';
 import { AITool } from '@/types';
 import { Button } from '@/components/ui/button';
 import AIFormModal from '@/components/AIFormModal';
+import AIToolCard from '@/components/AIToolCard';
 import { toast } from 'sonner';
 
 const STORAGE_KEY = 'ai-hub-tools';
@@ -17,7 +19,6 @@ export default function Home() {
   const [aiTools, setAiTools] = useState<AITool[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTool, setEditingTool] = useState<AITool | undefined>();
-  const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
 
   // Load AI tools from localStorage
   useEffect(() => {
@@ -79,15 +80,7 @@ export default function Home() {
     }
   };
 
-  const toggleExpanded = (toolId: string) => {
-    const newExpanded = new Set(expandedTools);
-    if (newExpanded.has(toolId)) {
-      newExpanded.delete(toolId);
-    } else {
-      newExpanded.add(toolId);
-    }
-    setExpandedTools(newExpanded);
-  };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,13 +94,21 @@ export default function Home() {
                 Manage your AI tools, pricing tiers, and API keys in one place
               </p>
             </div>
-            <Button
-              onClick={handleAddTool}
-              className="btn-primary px-6 py-2 rounded flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Add AI Tool
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link href="/settings">
+                <Button className="btn-secondary px-6 py-2 rounded flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Settings
+                </Button>
+              </Link>
+              <Button
+                onClick={handleAddTool}
+                className="btn-primary px-6 py-2 rounded flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Add AI Tool
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -133,178 +134,12 @@ export default function Home() {
         ) : (
           <div className="space-y-4">
             {aiTools.map((tool) => (
-              <div key={tool.id} className="card-elevated">
-                {/* Tool Header */}
-                <div className="flex items-center justify-between p-6">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground">
-                      {tool.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {tool.provider}
-                    </p>
-                    {tool.description && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {tool.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => toggleExpanded(tool.id)}
-                      className="p-2 hover:bg-muted rounded transition-colors"
-                      title="Toggle details"
-                    >
-                      {expandedTools.has(tool.id) ? (
-                        <ChevronUp className="w-5 h-5" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleEditTool(tool)}
-                      className="p-2 hover:bg-muted rounded transition-colors"
-                      title="Edit tool"
-                    >
-                      <Edit2 className="w-5 h-5 text-accent" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTool(tool.id)}
-                      className="p-2 hover:bg-destructive/10 rounded transition-colors"
-                      title="Delete tool"
-                    >
-                      <Trash2 className="w-5 h-5 text-destructive" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Expanded Content */}
-                {expandedTools.has(tool.id) && (
-                  <div className="border-t border-border px-6 py-4 space-y-4">
-                    {/* Tool Information */}
-                    {(tool.advantages ||
-                      tool.disadvantages ||
-                      tool.highlights) && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {tool.advantages && tool.advantages.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-2">
-                              Advantages
-                            </h4>
-                            <ul className="space-y-1">
-                              {tool.advantages.map((adv, idx) => (
-                                <li
-                                  key={idx}
-                                  className="text-sm text-muted-foreground flex items-start gap-2"
-                                >
-                                  <span className="text-accent mt-1">+</span>
-                                  <span>{adv}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {tool.disadvantages &&
-                          tool.disadvantages.length > 0 && (
-                            <div>
-                              <h4 className="font-semibold text-foreground mb-2">
-                                Disadvantages
-                              </h4>
-                              <ul className="space-y-1">
-                                {tool.disadvantages.map((dis, idx) => (
-                                  <li
-                                    key={idx}
-                                    className="text-sm text-muted-foreground flex items-start gap-2"
-                                  >
-                                    <span className="text-destructive mt-1">
-                                      -
-                                    </span>
-                                    <span>{dis}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                        {tool.highlights && tool.highlights.length > 0 && (
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-2">
-                              Highlights
-                            </h4>
-                            <ul className="space-y-1">
-                              {tool.highlights.map((highlight, idx) => (
-                                <li
-                                  key={idx}
-                                  className="text-sm text-muted-foreground flex items-start gap-2"
-                                >
-                                  <span className="text-accent mt-1">★</span>
-                                  <span>{highlight}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Pricing Tiers */}
-                    {tool.pricingTiers && tool.pricingTiers.length > 0 && (
-                      <div className="border-t border-border pt-4">
-                        <h4 className="font-semibold text-foreground mb-3">
-                          Pricing Tiers
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {tool.pricingTiers.map((tier) => (
-                            <div
-                              key={tier.id}
-                              className="border border-border rounded p-3 bg-muted/30"
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <h5 className="font-semibold text-foreground">
-                                  {tier.name}
-                                </h5>
-                                <span className="text-sm font-bold text-accent">
-                                  {tier.currency} {tier.price}
-                                </span>
-                              </div>
-                              <p className="text-xs text-muted-foreground mb-2">
-                                {tier.billingCycle === 'monthly'
-                                  ? 'per month'
-                                  : 'per year'}
-                              </p>
-                              {tier.description && (
-                                <p className="text-xs text-muted-foreground mb-2">
-                                  {tier.description}
-                                </p>
-                              )}
-                              {tier.features.length > 0 && (
-                                <ul className="space-y-1">
-                                  {tier.features.slice(0, 3).map((feat, idx) => (
-                                    <li
-                                      key={idx}
-                                      className="text-xs text-muted-foreground flex items-start gap-1"
-                                    >
-                                      <span className="text-accent">•</span>
-                                      <span>{feat}</span>
-                                    </li>
-                                  ))}
-                                  {tier.features.length > 3 && (
-                                    <li className="text-xs text-muted-foreground">
-                                      +{tier.features.length - 3} more
-                                    </li>
-                                  )}
-                                </ul>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <AIToolCard
+                key={tool.id}
+                tool={tool}
+                onEdit={handleEditTool}
+                onDelete={handleDeleteTool}
+              />
             ))}
           </div>
         )}
