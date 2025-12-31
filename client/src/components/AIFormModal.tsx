@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, Loader2, Plus } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { AITool, PricingTier, FormState } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import { useAPIKeyManager } from '@/hooks/useAPIKeyManager';
 import { useAIInfoFetcher } from '@/hooks/useAIInfoFetcher';
 import PricingTierCard from '@/components/PricingTierCard';
 import AIInfoSelector from '@/components/AIInfoSelector';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorAlert from '@/components/ErrorAlert';
 import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
 
@@ -286,25 +288,25 @@ export default function AIFormModal({
               </div>
 
               {fetchError && (
-                <div className="p-3 bg-destructive/10 text-destructive rounded text-sm">
-                  {fetchError}
-                </div>
+                <ErrorAlert
+                  message={fetchError}
+                  title="API Error"
+                  onDismiss={resetFetcher}
+                  onRetry={handleFetchAIInfo}
+                />
               )}
 
-              <Button
-                onClick={handleFetchAIInfo}
-                disabled={isFetching}
-                className="btn-primary px-4 py-2 rounded flex items-center gap-2 w-full justify-center"
-              >
-                {isFetching ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Fetching...
-                  </>
-                ) : (
-                  'Fetch Information with AI'
-                )}
-              </Button>
+              {isFetching ? (
+                <LoadingSpinner message="Fetching AI information..." size="sm" />
+              ) : (
+                <Button
+                  onClick={handleFetchAIInfo}
+                  disabled={isFetching}
+                  className="btn-primary px-4 py-2 rounded w-full"
+                >
+                  Fetch Information with AI
+                </Button>
+              )}
 
               {aiInfo && !showAISelector && (
                 <Button

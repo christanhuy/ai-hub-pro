@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Key, Settings as SettingsIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import APIKeyManager from '@/components/APIKeyManager';
+import ExportImportData from '@/components/ExportImportData';
 import { useAPIKeyManager } from '@/hooks/useAPIKeyManager';
 import { toast } from 'sonner';
 
@@ -196,30 +197,8 @@ export default function Settings() {
                   Manage your application data and storage
                 </p>
 
-                <div className="space-y-4">
-                  <div className="border border-border rounded-lg p-4">
-                    <h4 className="font-semibold text-foreground mb-2">
-                      Export Data
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Download all your AI tools and settings as JSON
-                    </p>
-                    <Button className="btn-secondary px-4 py-2 rounded">
-                      Export as JSON
-                    </Button>
-                  </div>
-
-                  <div className="border border-border rounded-lg p-4">
-                    <h4 className="font-semibold text-foreground mb-2">
-                      Import Data
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Import previously exported data
-                    </p>
-                    <Button className="btn-secondary px-4 py-2 rounded">
-                      Choose File
-                    </Button>
-                  </div>
+                <div className="border border-border rounded-lg p-4">
+                  <ExportImportData />
                 </div>
               </div>
 

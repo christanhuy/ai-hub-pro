@@ -11,6 +11,8 @@ import { AITool } from '@/types';
 import { Button } from '@/components/ui/button';
 import AIFormModal from '@/components/AIFormModal';
 import AIToolCard from '@/components/AIToolCard';
+import StatisticsCard from '@/components/StatisticsCard';
+import { useAPIKeyManager } from '@/hooks/useAPIKeyManager';
 import { toast } from 'sonner';
 
 const STORAGE_KEY = 'ai-hub-tools';
@@ -19,6 +21,7 @@ export default function Home() {
   const [aiTools, setAiTools] = useState<AITool[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTool, setEditingTool] = useState<AITool | undefined>();
+  const { apiKeys } = useAPIKeyManager();
 
   // Load AI tools from localStorage
   useEffect(() => {
@@ -115,6 +118,13 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="container py-8">
+        {/* Statistics */}
+        {aiTools.length > 0 && (
+          <div className="mb-8">
+            <StatisticsCard tools={aiTools} savedAPIKeysCount={apiKeys.size} />
+          </div>
+        )}
+
         {aiTools.length === 0 ? (
           <div className="card-elevated p-12 text-center">
             <h2 className="text-xl font-semibold text-foreground mb-2">
